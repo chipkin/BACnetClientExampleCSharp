@@ -1,0 +1,8 @@
+
+bin/CASBACnetStack_x64_Debug\.dll
+
+BACnetClientExampleCSharp/\.vs/
+
+BACnetClientExampleCSharp/obj/
+
+bin/netcoreapp2\.1/

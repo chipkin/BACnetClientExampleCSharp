@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BACnetClientExampleCSharp": {
+      "commandName": "Project",
+      "workingDirectory": "../bin"
+    }
+  }
+}
