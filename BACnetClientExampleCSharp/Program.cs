@@ -15,7 +15,6 @@ namespace BACnetClientExampleCSharp
             bacnetServer.Run();
         }
 
-
         unsafe class BACnetServer
         {
             // UDP 
@@ -24,11 +23,14 @@ namespace BACnetClientExampleCSharp
 
             // Settings 
             const UInt16 SETTING_BACNET_PORT = 47808;
-            const UInt32 SETTING_BACNET_DEVICE_INSTANCE = 389999;
+            const UInt32 SETTING_BACNET_DEVICE_INSTANCE = 389000;
             const string SETTING_BACNET_SERVER_IP_ADDRESS = "192.168.1.26";
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.1";
+            const string APPLICATION_VERSION = "0.0.2";
+
+            // User Input
+            ConsoleKey subOption = ConsoleKey.NoName;   // If set to NoName, no suboption.  See CheckUserInput for more info
 
             public void Run()
             {
@@ -70,6 +72,10 @@ namespace BACnetClientExampleCSharp
                 // Add the device. 
                 CASBACnetStackAdapter.AddDevice(SETTING_BACNET_DEVICE_INSTANCE);
 
+                // Enable services to support
+                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);    // Disabling WhoIs processing so this example does not respond to the WhoIs message it sends
+                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_I_AM, true);
+                
                 // All done with the BACnet setup. 
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
 
@@ -80,6 +86,15 @@ namespace BACnetClientExampleCSharp
                 // Main loop.
                 int nextPoll = 0;
                 Console.WriteLine("FYI: Starting main loop");
+                Console.WriteLine("Main Menu:");
+                Console.WriteLine("  D - WhoIs Menu - Send various WhoIs messages");
+                Console.WriteLine("  F - RegisterForeignDevice message");
+                Console.WriteLine("  C - Send SubscribeCOV message");
+                Console.WriteLine("  R - Send ReadProperty message");
+                Console.WriteLine("  A - Send ReadProperty All message");
+                Console.WriteLine("  W - Send WriteProperty message");
+                Console.WriteLine("  M - Send ReadProperty Multiple Asynch message");
+                Console.WriteLine("  E - Send WriteProperty Multiple Asynch message");
                 for (; ; )
                 {
                     CASBACnetStackAdapter.Loop();
@@ -97,8 +112,18 @@ namespace BACnetClientExampleCSharp
                 {
                     return 0;
                 }
+
                 // Extract the connection string into a IP address and port. 
-                IPAddress ipAddress = new IPAddress(new byte[] { connectionString[0], connectionString[1], connectionString[2], connectionString[3] });
+                IPAddress ipAddress;
+                if (broadcast)
+                {
+                    // Note: for the sake of this example, simply setting the last octet if the message should be sent as a broadcast.
+                    ipAddress = new IPAddress(new byte[] { connectionString[0], connectionString[1], connectionString[2], 0xFF });
+                }
+                else
+                {
+                    ipAddress = new IPAddress(new byte[] { connectionString[0], connectionString[1], connectionString[2], connectionString[3] });
+                }
                 IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, (connectionString[4] + connectionString[5] * 256));
 
                 // Debug 
@@ -107,7 +132,7 @@ namespace BACnetClientExampleCSharp
                 // Copy from the unsafe pointer to a Byte array. 
                 byte[] sendBytes = new byte[messageLength];
                 Marshal.Copy((IntPtr)message, sendBytes, 0, messageLength);
-
+   
                 try
                 {
                     this.udpServer.Send(sendBytes, sendBytes.Length, ipEndPoint);
@@ -177,6 +202,14 @@ namespace BACnetClientExampleCSharp
                     return; // Nothing to do. 
                 }
                 ConsoleKeyInfo inputKey = Console.ReadKey(true);
+                Console.WriteLine(">{0}", inputKey.Key);
+
+                // Check if in a subOption
+                if(subOption != ConsoleKey.NoName)
+                {
+                    CheckUserSubOption(inputKey.Key);
+                    return;
+                }
 
                 byte[] connectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(SETTING_BACNET_SERVER_IP_ADDRESS), SETTING_BACNET_PORT));
                 byte* connectionStringPointer = PointerData(connectionStringAsBytes);
@@ -186,8 +219,13 @@ namespace BACnetClientExampleCSharp
                 switch (inputKey.Key)
                 {
                     case ConsoleKey.D:
-                        Console.WriteLine("FYI: Sending Whois message");
-                        CASBACnetStackAdapter.SendWhoIs(connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, true, 0xFFFF, null, 0);
+                        Console.WriteLine("WhoIs Menu:");
+                        Console.WriteLine("  L - Send a Local Broadcast WhoIs message");
+                        Console.WriteLine("  W - Send a Local Broadcast WhoIs message with Limits");
+                        Console.WriteLine("  R - Send a Remote Broadcast WhoIs message");
+                        Console.WriteLine("  G - Send a Global Broadcast WhoIs message");
+                        Console.WriteLine("  Q - Exit WhoIs menu");
+                        subOption = inputKey.Key; ;
                         break;
 
                     case ConsoleKey.F:
@@ -313,6 +351,53 @@ namespace BACnetClientExampleCSharp
                 } // Switch 
             }
 
+            private void CheckUserSubOption(ConsoleKey input)
+            {
+                byte[] connectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(SETTING_BACNET_SERVER_IP_ADDRESS), SETTING_BACNET_PORT));
+                byte* connectionStringPointer = PointerData(connectionStringAsBytes);
+
+                switch (subOption)
+                {
+                    case ConsoleKey.D:
+                        switch(input)
+                        {
+                            case ConsoleKey.L:
+                                Console.WriteLine("FYI: Sending a Local Broadcast WhoIs message");
+                                CASBACnetStackAdapter.SendWhoIs(connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, true, 0, null, 0);
+                                break;
+                            case ConsoleKey.W:
+                                Console.WriteLine("FYI: Sending a Local Broadcast WhoIs message with limits of devices with device instances between 389900 and 389999");
+                                CASBACnetStackAdapter.SendWhoIsWithLimits(389900, 389999, connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, true, 0, null, 0);
+                                break;
+                            case ConsoleKey.R:
+                                Console.WriteLine("FYI: Sending a Remote Broadcast WhoIs message to DNET 7");
+                                CASBACnetStackAdapter.SendWhoIs(connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, true, 7, null, 0);
+                                break;
+                            case ConsoleKey.G:
+                                Console.WriteLine("FYI: Sending a Global Broadcast WhoIs message");
+                                CASBACnetStackAdapter.SendWhoIs(connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, true, 0xFFFF, null, 0);
+                                break;
+                            case ConsoleKey.Q:
+                                Console.WriteLine("FYI: Exiting the WhoIs menu");
+                                subOption = ConsoleKey.NoName;
+                                break;
+                            default:
+                                Console.WriteLine("You pressed the '{0}' key. Not an assigned WhoIs option", input);
+
+                                Console.WriteLine("Help:");
+                                Console.WriteLine("  L - Send a Local Broadcast WhoIs message");
+                                Console.WriteLine("  W - Send a Local Broadcast WhoIs message with Limits");
+                                Console.WriteLine("  R - Send a Remote Broadcast WhoIs message");
+                                Console.WriteLine("  G - Send a Global Broadcast WhoIs message");
+                                Console.WriteLine("  Q - Exit WhoIs menu");
+                                break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             private void ReadProperty()
             {
                 byte[] connectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(SETTING_BACNET_SERVER_IP_ADDRESS), SETTING_BACNET_PORT));
@@ -326,18 +411,18 @@ namespace BACnetClientExampleCSharp
 
             void CallbackHookIAm(UInt32 deviceIdentifier, UInt32 maxApduLengthAccepted, System.Byte segmentationSupported, UInt16 vendorIdentifier, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
-                Console.WriteLine("CallbackHookIAm deviceIdentifier=[{0}], ", deviceIdentifier);
+                Console.WriteLine("CallbackHookIAm deviceIdentifier=[{0}]", deviceIdentifier);
             }
 
             void CallbackHookIHave(UInt32 deviceIdentifier, UInt16 objectType, UInt32 objectInstance, char* objectName, UInt32 objectNameLength, System.Byte objectNameEncoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
-                Console.WriteLine("CallbackHookIHave deviceIdentifier=[{0}], objectType=[{1}], objectInstance=[{2}], ", deviceIdentifier, objectType, objectInstance);
+                Console.WriteLine("CallbackHookIHave deviceIdentifier=[{0}], objectType=[{1}], objectInstance=[{2}]", deviceIdentifier, objectType, objectInstance);
             }
 
 
             void CallbackHookError(System.Byte originalInvokeId, UInt32 errorChoice, UInt32 errorClass, UInt32 errorCode, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength, bool useObjectProperty, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier)
             {
-                Console.WriteLine("CallbackHookError originalInvokeId=[{0}], errorChoice=[{1}], errorClass=[{2}], ", originalInvokeId, errorChoice, errorClass);
+                Console.WriteLine("CallbackHookError originalInvokeId=[{0}], errorChoice=[{1}], errorClass=[{2}]", originalInvokeId, errorChoice, errorClass);
             }
 
 
