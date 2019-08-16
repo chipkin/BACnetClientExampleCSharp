@@ -19,4 +19,8 @@
     <Compile Include="..\submodules\cas-bacnet-stack\adapters\csharp\CASBACnetStackAdapter.cs" Link="CASBACnetStackAdapter.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Link="README.md" />
+  </ItemGroup>
+
 </Project>
