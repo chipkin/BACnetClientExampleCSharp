@@ -4,7 +4,8 @@ BACnet IP Client example written in CSharp
 
 ## User input
 
-- D - Send Whois message
+#### Main Menu
+- D - WhoIs Menu - Send various WhoIs messages
 - F - RegisterForeignDevice message
 - C - Send SubscribeCOV message
 - R - Send ReadProperty message
@@ -12,6 +13,13 @@ BACnet IP Client example written in CSharp
 - W - Send WriteProperty message
 - M - Send ReadProperty Multiple Asynch message
 - E - Send WriteProperty Multiple Asynch message
+
+#### WhoIs Menu
+- L - Send a Local Broadcast WhoIs message
+- W - Send a Local Broadcast WhoIs message with Limits
+- R - Send a Remote Broadcast WhoIs message
+- G - Send a Global Broadcast WhoIs message
+- Q - Exit WhoIs menu
 
 ## Example output
 
