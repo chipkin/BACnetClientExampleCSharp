@@ -1,3 +1,9 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+  GIT_STRATEGY: fetch
+cache:
+  key: ${CI_JOB_NAME}
+
 stages:
   - build
 
@@ -11,17 +17,17 @@ Build:
     - set PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin
     # Update the CIBuildVersion.cs
     - cd BACnetClientExampleCSharp
-    - "echo namespace BACnetServerExample{static class CIBuildVersion { public const int CIBUILDNUMBER = %CI_PIPELINE_IID%;}} > CIBuildVersion.cs"
+    - "echo namespace CASBACnetStack {static class CIBuildVersion { public const int CIBUILDNUMBER = %CI_PIPELINE_IID%;}} > CIBuildVersion.cs"
     - type CIBuildVersion.cs
-    - cd ..\..\
+    - cd ..
   script:
     # Create the bin directory if it does not exist
     - cd BACnetClientExampleCSharp
     # Restore any nuget or other dependencies needed for the project
-    - msbuild /t:Restore /p:Configuration=Release /p:Platform=AnyCPU
+    - msbuild /t:Restore /p:Configuration=Release /p:Platform="Any CPU"
     # Build and package the project in an apk for android
-    - msbuild /p:Configuration=Release /p:Platform=AnyCPU
-    - cd bin\..\
+    - msbuild /p:Configuration=Release /p:Platform="Any CPU"
+    - cd ..\bin
     - dir
   artifacts:
     paths:
