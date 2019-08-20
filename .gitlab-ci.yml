@@ -1,5 +1,7 @@
 variables:
   GIT_SUBMODULE_STRATEGY: normal
+cache:
+  key: ${CI_JOB_NAME}
 
 stages:
   - build
