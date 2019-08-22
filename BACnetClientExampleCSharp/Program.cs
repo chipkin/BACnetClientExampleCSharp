@@ -71,8 +71,10 @@ namespace CASBACnetStack
                 CASBACnetStackAdapter.AddDevice(SETTING_BACNET_DEVICE_INSTANCE);
 
                 // Enable services to support
-                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);    // Disabling WhoIs processing so this example does not respond to the WhoIs message it sends
                 CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_I_AM, true);
+                // Disabling WhoIs processing so this example does not respond to the WhoIs message it sends
+                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);    
+                
                 
                 // All done with the BACnet setup. 
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
@@ -81,19 +83,10 @@ namespace CASBACnetStack
                 this.udpServer = new UdpClient(SETTING_BACNET_PORT);
                 this.RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-                // Main loop.
-                int nextPoll = 0;
+                // Main loop.                
                 Console.WriteLine("FYI: Starting main loop");
-                Console.WriteLine("Main Menu:");
-                Console.WriteLine("  D - WhoIs Menu - Send various WhoIs messages");
-                Console.WriteLine("  F - RegisterForeignDevice message");
-                Console.WriteLine("  C - Send SubscribeCOV message");
-                Console.WriteLine("  R - Send ReadProperty message");
-                Console.WriteLine("  A - Send ReadProperty All message");
-                Console.WriteLine("  W - Send WriteProperty message");
-                Console.WriteLine("  M - Send ReadProperty Multiple Asynch message");
-                Console.WriteLine("  E - Send WriteProperty Multiple Asynch message");
-                for (; ; )
+                PrintHelp();
+                for (; ;)
                 {
                     CASBACnetStackAdapter.Loop();
                     CheckUserInput();
@@ -126,6 +119,15 @@ namespace CASBACnetStack
 
                 // Debug 
                 Console.WriteLine("FYI: Sending {0} bytes to {1}", messageLength, ipEndPoint.ToString());
+
+                
+			    // XML decode (debug) 
+                IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
+                int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, messageLength, xmlBuffer, 1024 * 5);
+                string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
+                Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
+                Console.WriteLine(xmlStringBuffer);
+                Console.WriteLine("");
 
                 // Copy from the unsafe pointer to a Byte array. 
                 byte[] sendBytes = new byte[messageLength];
@@ -165,6 +167,15 @@ namespace CASBACnetStack
                         // Debug 
                         Console.WriteLine("FYI: Recving {0} bytes from {1}", receiveBytes.Length, RemoteIpEndPoint.ToString());
 
+                    
+					    // XML decode (debug) 
+                        IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
+                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
+                        string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
+                        Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
+                        Console.WriteLine(xmlStringBuffer);
+                        Console.WriteLine("");
+					
                         // Return length. 
                         return (ushort)receiveBytes.Length;
                     }
@@ -335,18 +346,23 @@ namespace CASBACnetStack
                     default:
                         Console.WriteLine("You pressed the '{0}' key. Not assinged", inputKey.Key);
 
-                        Console.WriteLine("Help:");
-                        Console.WriteLine("  D - Send Whois message");
-                        Console.WriteLine("  F - RegisterForeignDevice message");
-                        Console.WriteLine("  C - Send SubscribeCOV message");
-                        Console.WriteLine("  R - Send ReadProperty message");
-                        Console.WriteLine("  A - Send ReadProperty All message");
-                        Console.WriteLine("  W - Send WriteProperty message");
-                        Console.WriteLine("  M - Send ReadProperty Multiple Asynch message");
-                        Console.WriteLine("  E - Send WriteProperty Multiple Asynch message");
+                        PrintHelp();
 
                         break;
                 } // Switch 
+            }
+
+            private void PrintHelp()
+            {
+                Console.WriteLine("Help:");
+                Console.WriteLine("  D - Send Whois message");
+                Console.WriteLine("  F - RegisterForeignDevice message");
+                Console.WriteLine("  C - Send SubscribeCOV message");
+                Console.WriteLine("  R - Send ReadProperty message");
+                Console.WriteLine("  A - Send ReadProperty All message");
+                Console.WriteLine("  W - Send WriteProperty message");
+                Console.WriteLine("  M - Send ReadProperty Multiple Asynch message");
+                Console.WriteLine("  E - Send WriteProperty Multiple Asynch message");
             }
 
             private void CheckUserSubOption(ConsoleKey input)
@@ -515,7 +531,7 @@ namespace CASBACnetStack
                 if (objectType == CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT && objectInstance == 0 && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
                 {
                     // Got the value 
-                    Console.WriteLine("Send this value to Azure");
+                    Console.WriteLine("Example: Send this value to Azure");
                 }
             }
 
