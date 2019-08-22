@@ -1,6 +1,6 @@
 # BACnet Client Example CSharp
 
-BACnet IP Client example written in CSharp
+A basic BACnet IP Client example written in CSharp using the [CAS BACnet Stack](https://www.bacnetstack.com/).
 
 ## User input
 
@@ -220,3 +220,9 @@ FYI: Recving 42 bytes from 192.168.1.26:47808
 ::CASBACnetStack::BACnetUnconfirmedRequestProcessor::Process() in file: X:\chipkin\cas-bacnet-stack\source\BACnetUnconfirmedRequestProcessor.cpp(106) - Error - Unconfirmed Service=[2] is not supported by this device
 
 ```
+
+## Building
+
+A [Visual studio 2019](https://visualstudio.microsoft.com/downloads/) project is included with this project.
+
+This project also auto built using [Gitlab CI](https://docs.gitlab.com/ee/ci/) on every commit.
