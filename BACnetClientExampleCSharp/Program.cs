@@ -45,6 +45,9 @@ namespace CASBACnetStack
                 CASBACnetStackAdapter.RegisterCallbackReceiveMessage(RecvMessage);
                 CASBACnetStackAdapter.RegisterCallbackGetSystemTime(CallbackGetSystemTime);
 
+
+                CASBACnetStackAdapter.RegisterCallbackGetPropertyUnsignedInteger(CallbackGetUnsignedInteger);
+
                 // Data type callbacks 
                 CASBACnetStackAdapter.BACnetStack_RegisterHookIAm(CallbackHookIAm);
                 CASBACnetStackAdapter.BACnetStack_RegisterHookIHave(CallbackHookIHave);
@@ -73,9 +76,9 @@ namespace CASBACnetStack
                 // Enable services to support
                 CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_I_AM, true);
                 // Disabling WhoIs processing so this example does not respond to the WhoIs message it sends
-                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);    
-                
-                
+                CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);
+
+
                 // All done with the BACnet setup. 
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
 
@@ -86,7 +89,7 @@ namespace CASBACnetStack
                 // Main loop.                
                 Console.WriteLine("FYI: Starting main loop");
                 PrintHelp();
-                for (; ;)
+                for (; ; )
                 {
                     CASBACnetStackAdapter.Loop();
                     CheckUserInput();
@@ -120,10 +123,10 @@ namespace CASBACnetStack
                 // Debug 
                 Console.WriteLine("FYI: Sending {0} bytes to {1}", messageLength, ipEndPoint.ToString());
 
-                
-			    // XML decode (debug) 
+
+                // XML decode (debug) 
                 IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, messageLength, xmlBuffer, 1024 * 5);
+                int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, messageLength, xmlBuffer, 1024 * 5);
                 string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                 Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                 Console.WriteLine(xmlStringBuffer);
@@ -132,7 +135,7 @@ namespace CASBACnetStack
                 // Copy from the unsafe pointer to a Byte array. 
                 byte[] sendBytes = new byte[messageLength];
                 Marshal.Copy((IntPtr)message, sendBytes, 0, messageLength);
-   
+
                 try
                 {
                     this.udpServer.Send(sendBytes, sendBytes.Length, ipEndPoint);
@@ -167,15 +170,15 @@ namespace CASBACnetStack
                         // Debug 
                         Console.WriteLine("FYI: Recving {0} bytes from {1}", receiveBytes.Length, RemoteIpEndPoint.ToString());
 
-                    
-					    // XML decode (debug) 
+
+                        // XML decode (debug) 
                         IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
+                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
                         string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                         Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                         Console.WriteLine(xmlStringBuffer);
                         Console.WriteLine("");
-					
+
                         // Return length. 
                         return (ushort)receiveBytes.Length;
                     }
@@ -214,7 +217,7 @@ namespace CASBACnetStack
                 Console.WriteLine(">{0}", inputKey.Key);
 
                 // Check if in a subOption
-                if(subOption != ConsoleKey.NoName)
+                if (subOption != ConsoleKey.NoName)
                 {
                     CheckUserSubOption(inputKey.Key);
                     return;
@@ -343,6 +346,34 @@ namespace CASBACnetStack
 
                         CASBACnetStackAdapter.SendWritePropertyAsync(null, connectionStringPointer, (byte)connectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, 0, null, 0, writePropertyValues);
                         break;
+
+                    case ConsoleKey.X:
+                        Console.WriteLine("FYI: Debug test for ConfirmedRequest");
+
+                        String testA_IPAddress = "192.168.1.26";
+                        byte[] testA_ConnectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(testA_IPAddress), SETTING_BACNET_PORT));
+                        byte* testA_ConnectionStringPointer = PointerData(testA_ConnectionStringAsBytes);
+
+                        CASBACnetStackAdapter.BuildReadProperty(CASBACnetStackAdapter.OBJECT_TYPE_DEVICE, 389999, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME, false, 0);
+                        CASBACnetStackAdapter.SendReadProperty(null, testA_ConnectionStringPointer, (byte)testA_ConnectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, 0, null, 0);
+                        
+                        String testB_IPAddress = "192.168.1.111";
+                        byte[] testB_ConnectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(testB_IPAddress), SETTING_BACNET_PORT));
+                        byte* testB_ConnectionStringPointer = PointerData(testB_ConnectionStringAsBytes);
+
+                        CASBACnetStackAdapter.BuildReadProperty(CASBACnetStackAdapter.OBJECT_TYPE_DEVICE, 389001, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME, false, 0);
+                        CASBACnetStackAdapter.SendReadProperty(null, testB_ConnectionStringPointer, (byte)testB_ConnectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, 0, null, 0);
+                        /*
+                        String testC_IPAddress = "192.168.1.26";
+                        byte[] testC_ConnectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(testC_IPAddress), SETTING_BACNET_PORT));
+                        byte* testC_ConnectionStringPointer = PointerData(testC_ConnectionStringAsBytes);
+
+                        CASBACnetStackAdapter.BuildReadProperty(CASBACnetStackAdapter.OBJECT_TYPE_DEVICE, 189999, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME, false, 0);
+                        CASBACnetStackAdapter.SendReadProperty(null, testC_ConnectionStringPointer, (byte)testC_ConnectionStringAsBytes.Length, CASBACnetStackAdapter.NETWORK_TYPE_IP, 0, null, 0);
+                        */
+
+                        break;
+
                     default:
                         Console.WriteLine("You pressed the '{0}' key. Not assinged", inputKey.Key);
 
@@ -373,7 +404,7 @@ namespace CASBACnetStack
                 switch (subOption)
                 {
                     case ConsoleKey.D:
-                        switch(input)
+                        switch (input)
                         {
                             case ConsoleKey.L:
                                 Console.WriteLine("FYI: Sending a Local Broadcast WhoIs message");
@@ -428,7 +459,7 @@ namespace CASBACnetStack
                 Console.WriteLine("CallbackHookIAm deviceIdentifier=[{0}]", deviceIdentifier);
             }
 
-            void CallbackHookIHave(UInt32 deviceIdentifier, UInt16 objectType, UInt32 objectInstance, char* objectName, UInt32 objectNameLength, System.Byte objectNameEncoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
+            void CallbackHookIHave(UInt32 deviceIdentifier, UInt16 objectType, UInt32 objectInstance, System.Byte* objectName, UInt32 objectNameLength, System.Byte objectNameEncoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
                 Console.WriteLine("CallbackHookIHave deviceIdentifier=[{0}], objectType=[{1}], objectInstance=[{2}]", deviceIdentifier, objectType, objectInstance);
             }
@@ -476,7 +507,7 @@ namespace CASBACnetStack
             }
 
 
-            void CallbackHookPropertyCharString(UInt32 id, System.Byte service, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool usePropertyArrayIndex, UInt32 propertyArrayIndex, char* value, UInt32 length, System.Byte encoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
+            void CallbackHookPropertyCharString(UInt32 id, System.Byte service, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool usePropertyArrayIndex, UInt32 propertyArrayIndex, System.Byte* value, UInt32 length, System.Byte encoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
                 Console.WriteLine("CallbackHookPropertyCharString id=[{0}], objectType=[{1}], objectInstance=[{2}], propertyIdentifier=[{3}]", id, objectType, objectInstance, propertyArrayIndex);
             }
@@ -545,11 +576,26 @@ namespace CASBACnetStack
             {
                 Console.WriteLine("CallbackHookPropertyUInt id=[{0}], objectType=[{1}], objectInstance=[{2}], propertyIdentifier=[{3}], value=[{4}] ", id, objectType, objectInstance, propertyIdentifier, value);
             }
+
+
+            public bool CallbackGetUnsignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, UInt32* value, bool useArrayIndex, UInt32 propertyArrayIndex)
+            {
+                Console.WriteLine("FYI: Request for CallbackGetUnsignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
+
+                if (objectType == CASBACnetStackAdapter.OBJECT_TYPE_DEVICE && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_APDUTIMEOUT)
+                {
+                    *value = 3000;
+                    return true;
+                }
+                else if (objectType == CASBACnetStackAdapter.OBJECT_TYPE_DEVICE && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_NUMBEROFAPDURETRIES)
+                {
+                    *value = 3;
+                    return true;
+                }
+
+                return false;
+
+            }
         }
-
-
-
-
-
     }
 }
