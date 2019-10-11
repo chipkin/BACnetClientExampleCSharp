@@ -126,7 +126,7 @@ namespace CASBACnetStack
 
                 // XML decode (debug) 
                 IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, messageLength, xmlBuffer, 1024 * 5);
+                int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, messageLength, xmlBuffer, 1024 * 5);
                 string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                 Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                 Console.WriteLine(xmlStringBuffer);
@@ -173,7 +173,7 @@ namespace CASBACnetStack
 
                         // XML decode (debug) 
                         IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML((char*)message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
+                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
                         string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                         Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                         Console.WriteLine(xmlStringBuffer);
@@ -459,7 +459,7 @@ namespace CASBACnetStack
                 Console.WriteLine("CallbackHookIAm deviceIdentifier=[{0}]", deviceIdentifier);
             }
 
-            void CallbackHookIHave(UInt32 deviceIdentifier, UInt16 objectType, UInt32 objectInstance, char* objectName, UInt32 objectNameLength, System.Byte objectNameEncoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
+            void CallbackHookIHave(UInt32 deviceIdentifier, UInt16 objectType, UInt32 objectInstance, System.Byte* objectName, UInt32 objectNameLength, System.Byte objectNameEncoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
                 Console.WriteLine("CallbackHookIHave deviceIdentifier=[{0}], objectType=[{1}], objectInstance=[{2}]", deviceIdentifier, objectType, objectInstance);
             }
@@ -507,7 +507,7 @@ namespace CASBACnetStack
             }
 
 
-            void CallbackHookPropertyCharString(UInt32 id, System.Byte service, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool usePropertyArrayIndex, UInt32 propertyArrayIndex, char* value, UInt32 length, System.Byte encoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
+            void CallbackHookPropertyCharString(UInt32 id, System.Byte service, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool usePropertyArrayIndex, UInt32 propertyArrayIndex, System.Byte* value, UInt32 length, System.Byte encoding, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, UInt16 network, System.Byte* sourceAddress, System.Byte sourceAddressLength)
             {
                 Console.WriteLine("CallbackHookPropertyCharString id=[{0}], objectType=[{1}], objectInstance=[{2}], propertyIdentifier=[{3}]", id, objectType, objectInstance, propertyArrayIndex);
             }
