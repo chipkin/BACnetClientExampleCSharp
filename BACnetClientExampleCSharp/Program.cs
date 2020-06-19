@@ -1,4 +1,21 @@
-﻿using System;
+﻿/*
+ * BACnet Client Example C#
+ * ----------------------------------------------------------------------------
+ * Program.cs
+ * 
+ * A basic BACnet IP Client example written in C# using the CAS BACnet Stack.
+ *
+ * More information https://github.com/chipkin/BACnetClientExampleCSharp
+ * 
+ * This file contains the 'Main' function. Program execution begins and ends there.
+ * 
+ * Created by: Steven Smethurst
+ * Created on: June 21, 2019 
+ * Last updated: June 19, 2020
+*/
+
+
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -7,29 +24,34 @@ namespace CASBACnetStack
 {
     class Program
     {
+        // Main function
         static void Main(string[] args)
         {
             BACnetServer bacnetServer = new BACnetServer();
             bacnetServer.Run();
         }
 
+        // BACnet Server Object
         unsafe class BACnetServer
         {
             // UDP 
             UdpClient udpServer;
             IPEndPoint RemoteIpEndPoint;
 
-            // Settings 
+            // Setting up BACnet port
             const UInt16 SETTING_BACNET_PORT = 47808;
+            // Device Instance
             const UInt32 SETTING_BACNET_DEVICE_INSTANCE = 389000;
+            // Downstream IP
             const string SETTING_BACNET_SERVER_IP_ADDRESS = "192.168.1.26";
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.2";
+            const string APPLICATION_VERSION = "0.0.3";
 
             // User Input
             ConsoleKey subOption = ConsoleKey.NoName;   // If set to NoName, no suboption.  See CheckUserInput for more info
 
+            // Server setup and main loop
             public void Run()
             {
                 Console.WriteLine("Starting BACnet Client Example CSharp version {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
@@ -40,15 +62,15 @@ namespace CASBACnetStack
                     CASBACnetStackAdapter.GetAPIPatchVersion(),
                     CASBACnetStackAdapter.GetAPIBuildVersion());
 
-                // Send/Recv callbacks. 
+                // 1. Setup the hooks and callbacks
+                // ---------------------------------------------------------------------------
+                // Send/Recv callbacks 
                 CASBACnetStackAdapter.RegisterCallbackSendMessage(SendMessage);
                 CASBACnetStackAdapter.RegisterCallbackReceiveMessage(RecvMessage);
                 CASBACnetStackAdapter.RegisterCallbackGetSystemTime(CallbackGetSystemTime);
-
-
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyUnsignedInteger(CallbackGetUnsignedInteger);
 
-                // Data type callbacks 
+                // Data type hooks
                 CASBACnetStackAdapter.BACnetStack_RegisterHookIAm(CallbackHookIAm);
                 CASBACnetStackAdapter.BACnetStack_RegisterHookIHave(CallbackHookIHave);
                 CASBACnetStackAdapter.BACnetStack_RegisterHookError(CallbackHookError);
@@ -70,36 +92,54 @@ namespace CASBACnetStack
                 CASBACnetStackAdapter.BACnetStack_RegisterHookPropertyTime(CallbackHookPropertyTime);
                 CASBACnetStackAdapter.BACnetStack_RegisterHookPropertyUInt(CallbackHookPropertyUInt);
 
-                // Add the device. 
+                // 2. Setup the BACnet device
+                // ---------------------------------------------------------------------------
+
                 CASBACnetStackAdapter.AddDevice(SETTING_BACNET_DEVICE_INSTANCE);
 
-                // Enable services to support
+                // 3. Enable Services
+                // ---------------------------------------------------------------------------
+                // Enable I-Am Service
                 CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_I_AM, true);
+
                 // Disabling WhoIs processing so this example does not respond to the WhoIs message it sends
                 CASBACnetStackAdapter.SetServiceEnabled(SETTING_BACNET_DEVICE_INSTANCE, CASBACnetStackAdapter.SERVICES_SUPPORTED_WHO_IS, false);
-
 
                 // All done with the BACnet setup. 
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
 
-                // Open the BACnet port to recive messages. 
+
+                // 4. Open the BACnet port to receive messages
+                // ---------------------------------------------------------------------------
                 this.udpServer = new UdpClient(SETTING_BACNET_PORT);
                 this.RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-                // Main loop.                
+
+                // 5. Start the main loop
+                // ---------------------------------------------------------------------------               
                 Console.WriteLine("FYI: Starting main loop");
                 PrintHelp();
                 for (; ; )
                 {
+                    // Main BACnet stack loop
                     CASBACnetStackAdapter.Loop();
-                    CheckUserInput();
+
+                    // Exit program if Q is hit on main menu
+                    if (!CheckUserInput())
+                    {
+                        break;
+                    }
                 }
             }
+
+            // Callback used by the BACnet Stack to get the current time
             public ulong CallbackGetSystemTime()
             {
                 // https://stackoverflow.com/questions/9453101/how-do-i-get-epoch-time-in-c
                 return (ulong)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
             }
+
+            // Callback used by the BACnet Stack to send a BACnet message
             public UInt16 SendMessage(System.Byte* message, UInt16 messageLength, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, Boolean broadcast)
             {
                 if (connectionStringLength < 6 || messageLength <= 0)
@@ -148,6 +188,8 @@ namespace CASBACnetStack
 
                 return 0;
             }
+
+            // Callback used by the BACnet Stack to check if there is a message to process
             public UInt16 RecvMessage(System.Byte* message, UInt16 maxMessageLength, System.Byte* receivedConnectionString, System.Byte maxConnectionStringLength, System.Byte* receivedConnectionStringLength, System.Byte* networkType)
             {
                 try
@@ -179,7 +221,7 @@ namespace CASBACnetStack
                         Console.WriteLine(xmlStringBuffer);
                         Console.WriteLine("");
 
-                        // Return length. 
+                        // Return length 
                         return (ushort)receiveBytes.Length;
                     }
                 }
@@ -190,6 +232,7 @@ namespace CASBACnetStack
                 return 0;
             }
 
+            // Extract the connection string into a IP address and port
             private byte[] CreateConnectionString(IPEndPoint endpoint)
             {
                 byte[] connectionString = new byte[6];
@@ -207,11 +250,12 @@ namespace CASBACnetStack
                 }
             }
 
-            private void CheckUserInput()
+            // Handle user input
+            private bool CheckUserInput()
             {
                 if (!Console.KeyAvailable)
                 {
-                    return; // Nothing to do. 
+                    return true; // Nothing to do. 
                 }
                 ConsoleKeyInfo inputKey = Console.ReadKey(true);
                 Console.WriteLine(">{0}", inputKey.Key);
@@ -220,7 +264,7 @@ namespace CASBACnetStack
                 if (subOption != ConsoleKey.NoName)
                 {
                     CheckUserSubOption(inputKey.Key);
-                    return;
+                    return true;
                 }
 
                 byte[] connectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(SETTING_BACNET_SERVER_IP_ADDRESS), SETTING_BACNET_PORT));
@@ -231,7 +275,7 @@ namespace CASBACnetStack
                 switch (inputKey.Key)
                 {
                     case ConsoleKey.D:
-                        Console.WriteLine("WhoIs Menu:");
+                        Console.WriteLine("\nWhoIs Menu:");
                         Console.WriteLine("  L - Send a Local Broadcast WhoIs message");
                         Console.WriteLine("  W - Send a Local Broadcast WhoIs message with Limits");
                         Console.WriteLine("  R - Send a Remote Broadcast WhoIs message");
@@ -374,18 +418,24 @@ namespace CASBACnetStack
 
                         break;
 
+                    // Quit the server
+                    case ConsoleKey.Q:
+                        Console.WriteLine("\nQuitting...");
+                        return false;
+
                     default:
-                        Console.WriteLine("You pressed the '{0}' key. Not assinged", inputKey.Key);
+                        Console.WriteLine("You pressed the '{0}' key. Not assigned", inputKey.Key);
 
                         PrintHelp();
 
                         break;
                 } // Switch 
+                return true;
             }
 
             private void PrintHelp()
             {
-                Console.WriteLine("Help:");
+                Console.WriteLine("\nHelp:");
                 Console.WriteLine("  D - Send Whois message");
                 Console.WriteLine("  F - RegisterForeignDevice message");
                 Console.WriteLine("  C - Send SubscribeCOV message");
@@ -394,6 +444,7 @@ namespace CASBACnetStack
                 Console.WriteLine("  W - Send WriteProperty message");
                 Console.WriteLine("  M - Send ReadProperty Multiple Asynch message");
                 Console.WriteLine("  E - Send WriteProperty Multiple Asynch message");
+                Console.WriteLine("  Q - Quit the server");
             }
 
             private void CheckUserSubOption(ConsoleKey input)
@@ -429,7 +480,7 @@ namespace CASBACnetStack
                             default:
                                 Console.WriteLine("You pressed the '{0}' key. Not an assigned WhoIs option", input);
 
-                                Console.WriteLine("Help:");
+                                Console.WriteLine("\nHelp:");
                                 Console.WriteLine("  L - Send a Local Broadcast WhoIs message");
                                 Console.WriteLine("  W - Send a Local Broadcast WhoIs message with Limits");
                                 Console.WriteLine("  R - Send a Remote Broadcast WhoIs message");
@@ -443,6 +494,7 @@ namespace CASBACnetStack
                 }
             }
 
+            // Send readproperty service request
             private void ReadProperty()
             {
                 byte[] connectionStringAsBytes = CreateConnectionString(new IPEndPoint(IPAddress.Parse(SETTING_BACNET_SERVER_IP_ADDRESS), SETTING_BACNET_PORT));
