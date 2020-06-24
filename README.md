@@ -9,7 +9,7 @@ Build versions of this example can be downloaded from the [Releases](https://git
 ## Installation
 
 Download the latest release zip file on the [Releases](https://github.com/chipkin/BACnetClientExampleCSharp/releases) page.
-Copy CASBACnetStack_x64_Release.dll from the stack into the release folder and launch server by using the following command:
+Copy CASBACnetStack_x64_Release.dll from the stack into the release folder and launch client by using the following command:
 ```
 dotnet BACnetClientExampleCSharp.dll
 ```
