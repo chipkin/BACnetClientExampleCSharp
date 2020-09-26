@@ -46,7 +46,7 @@ namespace CASBACnetStack
             const string SETTING_BACNET_SERVER_IP_ADDRESS = "192.168.1.26";
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.3";
+            const string APPLICATION_VERSION = "0.0.4";
 
             // User Input
             ConsoleKey subOption = ConsoleKey.NoName;   // If set to NoName, no suboption.  See CheckUserInput for more info
