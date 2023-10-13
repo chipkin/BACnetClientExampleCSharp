@@ -46,7 +46,7 @@ namespace CASBACnetStack
             const string SETTING_BACNET_SERVER_IP_ADDRESS = "192.168.1.26";
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.4";
+            const string APPLICATION_VERSION = "0.0.5";
 
             // User Input
             ConsoleKey subOption = ConsoleKey.NoName;   // If set to NoName, no suboption.  See CheckUserInput for more info
@@ -166,7 +166,7 @@ namespace CASBACnetStack
 
                 // XML decode (debug) 
                 IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, messageLength, xmlBuffer, 1024 * 5);
+                int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, messageLength, xmlBuffer, 1024 * 5, networkType);
                 string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                 Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                 Console.WriteLine(xmlStringBuffer);
@@ -215,7 +215,7 @@ namespace CASBACnetStack
 
                         // XML decode (debug) 
                         IntPtr xmlBuffer = Marshal.AllocHGlobal(1024 * 5);
-                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5);
+                        int bufferLength = CASBACnetStackAdapter.DecodeAsXML(message, (ushort)receiveBytes.Length, xmlBuffer, 1024 * 5, 0);
                         string xmlStringBuffer = Marshal.PtrToStringAnsi(xmlBuffer, bufferLength);
                         Marshal.FreeHGlobal(xmlBuffer);// Free HGlobal memory
                         Console.WriteLine(xmlStringBuffer);

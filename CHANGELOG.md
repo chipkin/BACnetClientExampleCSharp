@@ -2,6 +2,11 @@
 
 ## Version 0.0.x
 
+### 0.0.5 (2020-Sep-25)
+
+- Updated the Adaptor and program.cs DecodeAsXML to include networkType as requested by the CASBACnetStackDLL.h [Issue/11](https://github.com/chipkin/BACnetClientExampleCSharp/issues/11)
+- Tested using CAS BACnet stack version 4.1.19.2330
+
 ### 0.0.4 (2020-Sep-25)
 
 - Updated to CAS BACnet stack version 3.19.0.x
